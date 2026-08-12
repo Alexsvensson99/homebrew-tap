@@ -51,6 +51,7 @@ jobs:
           esac
 
           cd "$RUNNER_TEMP"
+          test "$(brew list --versions pkglift)" = "pkglift 0.1.1"
           test "$("$binary_path" version)" = "0.1.1"
           "$binary_path" registry validate
           codesign --verify --strict --verbose=4 "$installed_binary"
