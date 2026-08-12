@@ -1,0 +1,73 @@
+name: Test Formula
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_FROM_API: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Require Apple Silicon
+        run: test "$(uname -m)" = arm64
+
+      - name: Configure Local Tap
+        run: brew tap --custom-remote Alexsvensson99/tap "$GITHUB_WORKSPACE"
+
+      - name: Style
+        run: brew style Alexsvensson99/tap/pkglift
+
+      - name: Audit
+        run: brew audit --strict --online Alexsvensson99/tap/pkglift
+
+      - name: Install
+        run: brew install Alexsvensson99/tap/pkglift
+
+      - name: Verify Installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          formula_prefix="$(brew --prefix Alexsvensson99/tap/pkglift)"
+          binary_path="$formula_prefix/bin/pkglift"
+          installed_binary="$formula_prefix/libexec/pkglift"
+
+          test -L "$binary_path"
+          case "$(readlink "$binary_path")" in
+            /*)
+              echo "Expected a relative bin symlink." >&2
+              exit 1
+              ;;
+          esac
+
+          cd "$RUNNER_TEMP"
+          test "$("$binary_path" version)" = "0.1.1"
+          "$binary_path" registry validate
+          codesign --verify --strict --verbose=4 "$installed_binary"
+          file "$installed_binary" | grep -q "arm64"
+          xcrun vtool -show-build "$installed_binary" | grep -Eq "minos 14(\\.0)?"
+
+      - name: Formula Test
+        run: brew test Alexsvensson99/tap/pkglift
+
+      - name: Uninstall
+        run: |
+          brew uninstall pkglift
+          if brew list --formula pkglift >/dev/null 2>&1; then
+            echo "pkglift remained installed after uninstall" >&2
+            exit 1
+          fi
+
+      - name: Cleanup After Failure
+        if: failure()
+        run: brew uninstall --force pkglift || true
