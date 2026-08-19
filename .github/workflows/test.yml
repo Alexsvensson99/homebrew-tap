@@ -51,8 +51,8 @@ jobs:
           esac
 
           cd "$RUNNER_TEMP"
-          test "$(brew list --versions pkglift)" = "pkglift 0.2.1"
-          test "$("$binary_path" version)" = "0.2.1"
+          test "$(brew list --versions pkglift)" = "pkglift 0.3.0"
+          test "$("$binary_path" version)" = "0.3.0"
           "$binary_path" registry validate
           codesign --verify --strict --verbose=4 "$installed_binary"
           file "$installed_binary" | grep -q "arm64"
