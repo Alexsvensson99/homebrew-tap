@@ -2,7 +2,6 @@ class Pkglift < Formula
   desc "Safely migrate CocoaPods dependencies to Swift Package Manager"
   homepage "https://github.com/Alexsvensson99/PkgLift"
   url "https://github.com/Alexsvensson99/PkgLift/releases/download/v0.6.0/pkglift-macos-arm64.tar.gz"
-  version "0.6.0"
   sha256 "87533df993ab31af4764eb4c15734b06a3a64364dd493d042a9b7d16333f4088"
   license "MIT"
 
